@@ -1,0 +1,6 @@
+- Wczytuje inne pliki niż bitmapy
+- Komentarze 
+- Problem czy większych parametrach
+- Przecinek wykrzacza program
+- Addtywny sposób pomiaru jest ok
+- Wysokie zaszumienie
