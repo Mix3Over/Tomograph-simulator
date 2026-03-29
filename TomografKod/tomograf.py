@@ -1,7 +1,8 @@
 from __future__ import annotations
-
+import pydicom
 import os
 import threading
+import dicom_support
 import tkinter as tk
 from dataclasses import dataclass
 from tkinter import filedialog, messagebox, ttk
@@ -40,6 +41,7 @@ def _safe_int(v: str, default: int) -> int:
 
 @dataclass
 class AppState:
+    dicom_file: pydicom.dataset.FileDataset|None =None
     image_in: np.ndarray | None = None
     sinogram: np.ndarray | None = None
     image_out: np.ndarray | None = None
@@ -69,8 +71,9 @@ class TomografApp:
         controls.grid(row=0, column=0, sticky="nsw", padx=(0, 10))
 
         btn_load = ttk.Button(controls, text="Wczytaj BMP", command=self.on_load)
+        
         btn_load.grid(row=0, column=0, sticky="ew")
-
+        
         ttk.Separator(controls).grid(row=1, column=0, sticky="ew", pady=8)
 
         form = ttk.Frame(controls)
@@ -109,9 +112,10 @@ class TomografApp:
         ttk.Button(controls, text="Generuj sinogram", command=self.on_generate_sinogram).grid(row=8, column=0, sticky="ew")
         ttk.Button(controls, text="Rekonstrukcja", command=self.on_reconstruct).grid(row=9, column=0, sticky="ew", pady=(6, 0))
         ttk.Button(controls, text="RMSE (wejście vs wynik)", command=self.on_rmse).grid(row=10, column=0, sticky="ew", pady=(6, 0))
-
+        dicom_button= ttk.Button(controls, text="Edycja Dicom", command=dicom_support.edit(self.state.dicom_file))
+        dicom_button.grid(row=11, column=0, sticky="ew")
         self.status = tk.StringVar(value="Gotowe.")
-        ttk.Label(controls, textvariable=self.status, wraplength=260).grid(row=11, column=0, sticky="w", pady=(10, 0))
+        ttk.Label(controls, textvariable=self.status, wraplength=260).grid(row=12, column=0, sticky="w", pady=(10, 0))
 
         for i in range(12):
             controls.rowconfigure(i, pad=2)
@@ -156,22 +160,28 @@ class TomografApp:
 
     def on_load(self) -> None:
         path = filedialog.askopenfilename(
-            title="Wybierz bitmapę (BMP)",
+            title="Wybierz plik",
             filetypes=[("Bitmapy", "*.bmp;*.dib"), ("Wszystkie pliki", "*.*")],
         )
         if not path:
             return
         try:
-            img = _to_grayscale_np(path)
+            try:
+                dicomFile=dicom_support.load(path)
+                self.state.dicom_file = dicomFile     
+                img=dicomFile.pixel_array
+            except:
+                self.state.dicom_file = None
+                img = _to_grayscale_np(path)
         except Exception as e:
             messagebox.showerror("Błąd", f"Nie udało się wczytać obrazu.\n\n{e}")
             return
-
+        
         self.state.image_in = img
         self.state.sinogram = None
         self.state.image_out = None
         self.state.last_path = path
-
+        
         h, w = img.shape
         self.var_l.set(str(int(0.9 * min(w, h))))
         self._sync_slider_range()
