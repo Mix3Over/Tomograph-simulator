@@ -112,7 +112,7 @@ class TomografApp:
         ttk.Button(controls, text="Generuj sinogram", command=self.on_generate_sinogram).grid(row=8, column=0, sticky="ew")
         ttk.Button(controls, text="Rekonstrukcja", command=self.on_reconstruct).grid(row=9, column=0, sticky="ew", pady=(6, 0))
         ttk.Button(controls, text="RMSE (wejście vs wynik)", command=self.on_rmse).grid(row=10, column=0, sticky="ew", pady=(6, 0))
-        dicom_button= ttk.Button(controls, text="Edycja Dicom", command=dicom_support.edit(self.state.dicom_file))
+        dicom_button= ttk.Button(controls, text="Zapisz jako Dicom", command= lambda: dicom_support.DicomEditor(tk.Toplevel(),self.state.image_out,self.state.dicom_file))
         dicom_button.grid(row=11, column=0, sticky="ew")
         self.status = tk.StringVar(value="Gotowe.")
         ttk.Label(controls, textvariable=self.status, wraplength=260).grid(row=12, column=0, sticky="w", pady=(10, 0))
